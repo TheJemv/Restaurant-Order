@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  NOT_ORDERED      // No order yet
+  ORDERED          // Order placed
+  IN_PROGRESS      // Being prepared
+  DELIVERED        // Delivered to the table
+  REQUESTED_BILL   // Client asked for the bill
+  COMPLETED        // Payment done / closed
+}
+
+model Product {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String
+  ingredients  String[]
+  price        Float
+  photo        Bytes
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  OrderProduct OrderProduct[]
+}
+
+model Order {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  table     Int
+  products  OrderProduct[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  status    Status         @default(NOT_ORDERED)
+  billing   Float
+}
+
+model OrderProduct {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String
+  productId   String
+  exclude     String[]
+  quantity    Int
+  product     Product  @relation(fields: [productId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id])
+}
